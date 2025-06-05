@@ -14,18 +14,18 @@ import com.anscom.ecommerce.model.RefreshToken;
 import com.anscom.ecommerce.model.Role;
 import com.anscom.ecommerce.model.User;
 import com.anscom.ecommerce.security.CustomUserDetails;
+import com.anscom.ecommerce.service.EmailService;
 import com.anscom.ecommerce.service.RefreshTokenService;
 import com.anscom.ecommerce.service.RoleService;
 import com.anscom.ecommerce.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/authenticate")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
     private final UserService userService;
@@ -49,6 +50,9 @@ public class AuthController {
     private final PasswordEncoder encoder;
 
     private final JwtUtils jwtUtils;
+
+    @Autowired
+    private EmailService emailService;
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignUpRequest signUpRequest) {
@@ -154,10 +158,13 @@ public class AuthController {
 
         String resetLink = "http://localhost:8080/authenticate/reset-password?token=" + token;
 
-        // TODO: Send email
-        System.out.println("Password reset link: " + resetLink);
+        String subject = "Reset your password";
+        String body = "Click the following link to reset your password:\n" + resetLink;
 
-        return ResponseEntity.ok(new MessageResponse("Reset password link sent to email."));
+        emailService.sendEmail(user.getEmail(), subject, body);
+
+        return ResponseEntity.ok(new MessageResponse("Reset password link sent to your email."));
+
     }
 
     @PostMapping("/reset-password")

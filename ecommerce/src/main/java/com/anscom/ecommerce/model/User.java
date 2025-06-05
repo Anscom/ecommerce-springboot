@@ -29,7 +29,7 @@ public class User extends IdBasedEntity implements Serializable {
     @Column(name = "reset_password_token_expiry")
     private Instant resetPasswordTokenExpiry;
 
-    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
