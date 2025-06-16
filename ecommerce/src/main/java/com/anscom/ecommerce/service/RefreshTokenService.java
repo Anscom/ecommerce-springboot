@@ -1,8 +1,10 @@
 package com.anscom.ecommerce.service;
 
+import com.anscom.ecommerce.exception.UserNotFoundException;
 import com.anscom.ecommerce.model.RefreshToken;
 import com.anscom.ecommerce.model.User;
 import com.anscom.ecommerce.repository.RefreshTokenRepository;
+import com.anscom.ecommerce.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,26 +19,26 @@ import java.util.UUID;
 @Transactional
 public class RefreshTokenService {
 
+    private final UserRepository userRepository;
     @Value("${jwt.refrEshexpireMs}")
     private Long refreshTokenDurationMs;
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final UserService userService;
-
 
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
 
     public RefreshToken createRefreshToken(int userId) {
-        User user = userService.findById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID " + userId));
 
         // Delete existing refresh tokens for the user
         refreshTokenRepository.deleteByUser(user);
         refreshTokenRepository.flush(); // <-- ensure delete happens immediately
 
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(userService.findById(userId));
+        refreshToken.setUser(user);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setToken(UUID.randomUUID().toString());
 
@@ -51,4 +53,10 @@ public class RefreshTokenService {
 
         return token;
     }
+
+    public void deleteByUserId(Long userId) {
+        refreshTokenRepository.deleteByUserId(userId);
+    }
+
+
 }

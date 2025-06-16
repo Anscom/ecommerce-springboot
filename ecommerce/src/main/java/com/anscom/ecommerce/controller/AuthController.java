@@ -41,170 +41,65 @@ public class AuthController {
 
     private final UserService userService;
 
-    private final RoleService roleService;
-
-    private final RefreshTokenService refreshTokenService;
-
-    private final AuthenticationManager authenticationManager;
-
-    private final PasswordEncoder encoder;
-
-    private final JwtUtils jwtUtils;
-
-    @Autowired
-    private EmailService emailService;
-
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody SignUpRequest signUpRequest) {
-
-        String username = signUpRequest.getUsername();
-        String email = signUpRequest.getEmail();
-        String password = signUpRequest.getPassword();
-        Set<String> strRoles = signUpRequest.getRoles();
-        Set<Role> roles = new HashSet<>();
-
-        if(userService.existsByEmail(email)){
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already taken!"));
+    public ResponseEntity<?> registerUser(@RequestBody SignUpRequest request) {
+        try {
+            MessageResponse response = userService.registerUser(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         }
-
-        User user = new User();
-        user.setEmail(email);
-        user.setUsername(username);
-        user.setPassword(encoder.encode(password));
-
-        if (strRoles != null) {
-            strRoles.forEach(role -> {
-                switch (role) {
-                    case "ROLE_ADMIN":
-                        Role adminRole = null;
-
-                        if(roleService.findByName(RoleEnum.ROLE_ADMIN).isEmpty()){
-                            adminRole = new Role(RoleEnum.ROLE_ADMIN);
-                        }else{
-                            adminRole = roleService.findByName(RoleEnum.ROLE_ADMIN)
-                                    .orElseThrow(() -> new RoleException("Error: Admin Role is not found."));
-                        }
-
-                        roles.add(adminRole);
-
-                        break;
-                    default:
-                        Role userRole = null;
-
-                        if(roleService.findByName(RoleEnum.ROLE_USER).isEmpty()){
-                            userRole = new Role(RoleEnum.ROLE_USER);
-                        }else{
-                            userRole = roleService.findByName(RoleEnum.ROLE_USER)
-                                    .orElseThrow(() -> new RoleException("Error: User Role is not found."));
-                        }
-
-                        roles.add(userRole);
-                }
-            });
-        }else{
-            roleService.findByName(RoleEnum.ROLE_USER).ifPresentOrElse(roles::add, () -> roles.add(new Role(RoleEnum.ROLE_USER)));
-        }
-
-        user.setRoles(roles);
-        userService.saveUser(user);
-
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
-        String email = loginRequest.getEmail();
-        String password = loginRequest.getPassword();
-
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(email,password);
-
-        Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        String jwt = jwtUtils.generateJwtToken(userDetails.getEmail());
-
-        List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority())
-                .collect(Collectors.toList());
-
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
-
-        JWTResponse jwtResponse = new JWTResponse();
-        jwtResponse.setEmail(userDetails.getEmail());
-        jwtResponse.setUsername(userDetails.getUsername());
-        jwtResponse.setId(userDetails.getId());
-        jwtResponse.setToken(jwt);
-        jwtResponse.setRefreshToken(refreshToken.getToken());
-        jwtResponse.setRoles(roles);
-
-        return ResponseEntity.ok(jwtResponse);
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest request) {
+        try {
+            JWTResponse response = userService.loginUser(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Invalid login credentials."));
+        }
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-
-        Optional<User> optionalUser = userService.findByEmail(email);
-
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("User with this email does not exist."));
+        try {
+            MessageResponse response = userService.forgotPassword(request.get("email"));
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         }
-
-        User user = optionalUser.get(); // unwrap the user
-
-        String token = UUID.randomUUID().toString();
-        user.setResetPasswordToken(token);
-        user.setResetPasswordTokenExpiry(Instant.now().plus(15, ChronoUnit.MINUTES));
-        userService.saveUser(user);
-
-        String resetLink = "http://localhost:8080/authenticate/reset-password?token=" + token;
-
-        String subject = "Reset your password";
-        String body = "Click the following link to reset your password:\n" + resetLink;
-
-        emailService.sendEmail(user.getEmail(), subject, body);
-
-        return ResponseEntity.ok(new MessageResponse("Reset password link sent to your email."));
-
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
-        String token = request.get("token");
-        String newPassword = request.get("password");
-
-        Optional<User> optionalUser = userService.findByResetPasswordToken(token);
-
-        if (optionalUser.isEmpty() || optionalUser.get().getResetPasswordTokenExpiry().isBefore(Instant.now())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Invalid or expired token."));
+        try {
+            MessageResponse response = userService.resetPassword(request.get("token"), request.get("password"));
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         }
-
-        User user = optionalUser.get();
-        user.setPassword(encoder.encode(newPassword));
-        user.setResetPasswordToken(null);
-        user.setResetPasswordTokenExpiry(null);
-
-        userService.saveUser(user);
-
-        return ResponseEntity.ok(new MessageResponse("Password reset successful!"));
     }
-
-
 
     @PostMapping("/refreshtoken")
     public ResponseEntity<?> refreshtoken(@RequestBody TokenRefreshRequest request) {
-
-        String requestRefreshToken = request.getRefreshToken();
-
-        RefreshToken token = refreshTokenService.findByToken(requestRefreshToken)
-                .orElseThrow(() -> new RefreshTokenException(requestRefreshToken + "Refresh token is not in database!"));
-
-        RefreshToken deletedToken = refreshTokenService.verifyExpiration(token);
-
-        User userRefreshToken = deletedToken.getUser();
-
-        String newToken = jwtUtils.generateTokenFromUsername(userRefreshToken.getUsername());
-
-        return ResponseEntity.ok(new TokenRefreshResponse(newToken, requestRefreshToken));
+        try {
+            TokenRefreshResponse response = userService.refreshToken(request.getRefreshToken());
+            return ResponseEntity.ok(response);
+        } catch (RefreshTokenException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<MessageResponse> logout() {
+        return ResponseEntity.ok(userService.logoutUser());
+    }
+
+
+
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String, String>> getProfile() {
+        return ResponseEntity.ok(userService.getProfile());
+    }
 }

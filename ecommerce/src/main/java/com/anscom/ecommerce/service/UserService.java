@@ -1,45 +1,24 @@
 package com.anscom.ecommerce.service;
 
-import com.anscom.ecommerce.model.User;
-import com.anscom.ecommerce.repository.UserRepository;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.anscom.ecommerce.dto.request.LoginRequest;
+import com.anscom.ecommerce.dto.request.SignUpRequest;
+import com.anscom.ecommerce.dto.response.JWTResponse;
+import com.anscom.ecommerce.dto.response.MessageResponse;
+import com.anscom.ecommerce.dto.response.TokenRefreshResponse;
 
+import com.anscom.ecommerce.model.User;
+import jakarta.mail.Message;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Map;
 import java.util.Optional;
 
-@Service
-@Transactional
-@RequiredArgsConstructor
-public class UserService{
-
-    private final UserRepository userRepository;
-
-    public User saveUser(User user) {
-        return userRepository.save(user);
-    }
-
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
-
-    public Optional<User> findByResetPasswordToken(String token) {
-        return userRepository.findByResetPasswordToken(token);
-    }
-
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-    public Boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
-    }
-
-    public Boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    public User findById(int userId) {
-        return userRepository.findById(userId);
-    }
+public interface UserService {
+    MessageResponse registerUser(SignUpRequest signUpRequest);
+    JWTResponse loginUser(LoginRequest loginRequest);
+    MessageResponse forgotPassword(String email);
+    MessageResponse resetPassword(String token, String newPassword);
+    TokenRefreshResponse refreshToken(String refreshToken);
+    MessageResponse logoutUser();
+    Map<String, String> getProfile();
 }

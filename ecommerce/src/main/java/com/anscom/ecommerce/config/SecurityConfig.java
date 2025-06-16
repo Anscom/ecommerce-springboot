@@ -63,10 +63,18 @@ public class SecurityConfig {
                                 "/oauth2/**"
                         )
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/authenticate/logout").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/authenticate/profile").authenticated()
                         .requestMatchers(HttpMethod.POST, "/item/createItem").hasRole("ADMIN") // Require auth for POST
-                        .requestMatchers(HttpMethod.PUT, "/item/updateItem/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/item/updateItem/{id}") .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/item/deleteItem/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/item/**").permitAll() // Allow GET only
+                        .requestMatchers(HttpMethod.POST, "/cart/add").authenticated() // Allow GET only
+                        .requestMatchers(HttpMethod.GET, "/cart/mycart").authenticated() // Allow GET only
+                        .requestMatchers(HttpMethod.DELETE, "/cart/remove").authenticated() // Allow GET only
+                        .requestMatchers(HttpMethod.DELETE, "/cart/clearCart").authenticated() // Allow GET only
+                        .requestMatchers(HttpMethod.POST, "/cart/add").authenticated() // Allow GET only
+                        .requestMatchers(HttpMethod.POST, "/payment/create-payment").permitAll() // Allow GET only
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(customOAuth2SuccessHandler)

@@ -2,6 +2,7 @@ package com.anscom.ecommerce.security;
 
 import com.anscom.ecommerce.exception.UserNotFoundException;
 import com.anscom.ecommerce.model.User;
+import com.anscom.ecommerce.repository.UserRepository;
 import com.anscom.ecommerce.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,12 +14,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        User user = userService.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Email: " + email + " not found"));
 
         return new CustomUserDetails(user);
