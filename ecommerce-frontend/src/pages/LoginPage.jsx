@@ -87,7 +87,7 @@ return (
 <button
   className="w-full flex items-center justify-center bg-black text-white py-2 rounded-md"
   onClick={() => {
-    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    window.location.href = "https://a-ecommerce.anscom-dev.com/oauth2/authorization/google";
   }}
 >
   <img

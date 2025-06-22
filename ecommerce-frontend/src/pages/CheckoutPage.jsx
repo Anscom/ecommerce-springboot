@@ -37,7 +37,7 @@ const getItemById = useItemStore((state) => state.fetchItemById);
     // Call backend to create PaymentIntent
     const createPayment = async () => {
       try {
-        const res = await axios.post("http://localhost:8080/payment/create-payment", {
+        const res = await axios.post("https://a-ecommerce.anscom-dev.com/payment/create-payment", {
           amount: Math.round(subtotal * 100), // Stripe expects amount in cents
           currency: "myr",
           description: "Furniro Checkout",
