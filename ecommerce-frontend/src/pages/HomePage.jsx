@@ -8,7 +8,7 @@ import HoodieLogo from "../assets/hoodie3.jpg";
 import { Link } from 'react-router-dom';
 
 const HomePage = () => {
-  const { items, fetchPaginatedItems, getItemImageIds } = useItemStore()
+const { items = [], fetchPaginatedItems, getItemImageIds } = useItemStore()
   const [imageUrls, setImageUrls] = useState({}) // { itemId: imageUrl }
 const itemsImage = [
   { name: 'T-Shirt', img: TshirtLogo },
