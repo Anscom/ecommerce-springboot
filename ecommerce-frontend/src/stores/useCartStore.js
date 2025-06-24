@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import axios from 'axios'
 import { useAuthStore } from './useAuthStore'
 
-const BASE_URL = 'https://a-ecommerce.anscom-dev.com/cart'
+const BASE_URL = 'http://localhost:5001/cart'
 
 export const useCartStore = create((set, get) => ({
   cart: null,
