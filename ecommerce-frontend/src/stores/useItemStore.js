@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import axios from 'axios'
 import { useAuthStore } from './useAuthStore'  // import your auth store
 
-const BASE_URL = 'http://localhost:5001/item'
+const BASE_URL = 'https://a-ecommerce.anscom-dev.com/item'
 
 export const useItemStore = create((set, get) => ({
   items: [],

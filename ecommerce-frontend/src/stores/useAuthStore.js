@@ -5,8 +5,8 @@ import { jwtDecode } from 'jwt-decode'
 import { useCartStore } from './useCartStore'
 
 
-// const BASE_URL = 'https://a-ecommerce.anscom-dev.com/authenticate'
-const BASE_URL = 'http://localhost:5001/authenticate'
+ const BASE_URL = 'https://a-ecommerce.anscom-dev.com/authenticate'
+//const BASE_URL = 'http://localhost:5001/authenticate'
 
 export const useAuthStore = create((set) => ({
   user: null,
